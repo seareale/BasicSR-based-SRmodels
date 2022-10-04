@@ -1,13 +1,26 @@
 import os
+import random
 import sys
 from multiprocessing import Pool
 from os import path as osp
 
 import cv2
 import numpy as np
+import torch
+from tqdm import tqdm
+
+# Random seed
 sys.path.append('.')
 from basicsr.utils import scandir
-from tqdm import tqdm
+
+random_seed = 10
+torch.manual_seed(random_seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+np.random.seed(random_seed)
+random.seed(random_seed)
+torch.cuda.manual_seed(random_seed)
+# torch.cuda.manual_seed_all(random_seed) # if use multi-GPU
 
 
 def main():
@@ -39,8 +52,8 @@ def main():
     opt['compression_level'] = 3
 
     # save folder
-    save_folder = 'Dacon_split'
-    offset = 'NAFNet'
+    save_folder = 'SR'
+    offset = 'Dacon'
 
     # HRx4 images
     opt['input_folder'] = 'datasets/Dacon/train/hr'
@@ -52,7 +65,7 @@ def main():
     extract_subimages(opt)
 
     # LRx4 images
-    opt['input_folder'] = 'datasets/Dacon/train/lr_NAFNet'
+    opt['input_folder'] = 'datasets/Dacon/train/lr'
     opt['save_folder'] = f'datasets/{save_folder}/train/lr'
     opt['crop_size'] = 128 # 120
     opt['step'] = 64 # 60

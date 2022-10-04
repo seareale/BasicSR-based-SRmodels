@@ -1,10 +1,25 @@
-import cv2
 import math
-import numpy as np
 import os
+
+import cv2
+import numpy as np
 import torch
 from torchvision.utils import make_grid
 
+
+def padding(img_lq, img_gt, gt_size):
+    h, w, _ = img_lq.shape
+
+    h_pad = max(0, gt_size - h)
+    w_pad = max(0, gt_size - w)
+    
+    if h_pad == 0 and w_pad == 0:
+        return img_lq, img_gt
+
+    img_lq = cv2.copyMakeBorder(img_lq, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
+    img_gt = cv2.copyMakeBorder(img_gt, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
+    # print('img_lq', img_lq.shape, img_gt.shape)
+    return img_lq, img_gt
 
 def img2tensor(imgs, bgr2rgb=True, float32=True):
     """Numpy array to tensor.

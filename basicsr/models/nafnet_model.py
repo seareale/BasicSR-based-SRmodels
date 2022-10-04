@@ -5,21 +5,23 @@
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
 import importlib
-import torch
-import torch.nn.functional as F
 from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
-from tqdm import tqdm
 
+import torch
+import torch.nn.functional as F
 from basicsr.archs import define_network
+from basicsr.metrics import calculate_metric
 from basicsr.models.base_model import BaseModel
 from basicsr.utils import get_root_logger, imwrite, tensor2img
 from basicsr.utils.dist_util import get_dist_info
+from basicsr.utils.registry import LOSS_REGISTRY, MODEL_REGISTRY
+from tqdm import tqdm
 
 loss_module = importlib.import_module('basicsr.losses')
 metric_module = importlib.import_module('basicsr.metrics')
-
+@MODEL_REGISTRY.register()
 class ImageRestorationModel(BaseModel):
     """Base Deblur model for single image deblur."""
 
@@ -48,8 +50,8 @@ class ImageRestorationModel(BaseModel):
         # define losses
         if train_opt.get('pixel_opt'):
             pixel_type = train_opt['pixel_opt'].pop('type')
-            cri_pix_cls = getattr(loss_module, pixel_type)
-            self.cri_pix = cri_pix_cls(**train_opt['pixel_opt']).to(
+            cri_pix_cls = LOSS_REGISTRY.get(pixel_type)(**train_opt['pixel_opt'])
+            self.cri_pix = cri_pix_cls.to(
                 self.device)
         else:
             self.cri_pix = None
@@ -253,7 +255,7 @@ class ImageRestorationModel(BaseModel):
             self.output = torch.cat(outs, dim=0)
         self.net_g.train()
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image):
+    def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
         dataset_name = dataloader.dataset.opt['name']
         with_metrics = self.opt['val'].get('metrics') is not None
         if with_metrics:
@@ -267,6 +269,7 @@ class ImageRestorationModel(BaseModel):
             pbar = tqdm(total=len(dataloader), unit='image')
 
         cnt = 0
+        metric_data = dict()
 
         for idx, val_data in enumerate(dataloader):
             if idx % world_size != rank:
@@ -284,9 +287,11 @@ class ImageRestorationModel(BaseModel):
                 self.grids_inverse()
 
             visuals = self.get_current_visuals()
-            sr_img = tensor2img([visuals['result']], rgb2bgr=rgb2bgr)
+            sr_img = tensor2img([visuals['result']])
+            metric_data['img'] = sr_img
             if 'gt' in visuals:
-                gt_img = tensor2img([visuals['gt']], rgb2bgr=rgb2bgr)
+                gt_img = tensor2img([visuals['gt']])
+                metric_data['img2'] = gt_img
                 del self.gt
 
             # tentative for out of GPU memory
@@ -327,18 +332,8 @@ class ImageRestorationModel(BaseModel):
 
             if with_metrics:
                 # calculate metrics
-                opt_metric = deepcopy(self.opt['val']['metrics'])
-                if use_image:
-                    for name, opt_ in opt_metric.items():
-                        metric_type = opt_.pop('type')
-                        self.metric_results[name] += getattr(
-                            metric_module, metric_type)(sr_img, gt_img, **opt_)
-                else:
-                    for name, opt_ in opt_metric.items():
-                        metric_type = opt_.pop('type')
-                        self.metric_results[name] += getattr(
-                            metric_module, metric_type)(visuals['result'], visuals['gt'], **opt_)
-
+                for name, opt_ in self.opt['val']['metrics'].items():
+                    self.metric_results[name] += calculate_metric(metric_data, opt_)
             cnt += 1
             if rank == 0:
                 for _ in range(world_size):

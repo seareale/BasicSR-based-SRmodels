@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 from basicsr.archs.NAFNet_arch import NAFBlock
 
 
@@ -27,11 +26,11 @@ class DeblurEnsemble(nn.Module):
 
         self.device = torch.device('cuda')
 
-    def forward(self, inp):
+    def forward(self, x):
         self.to(self.device)
         x = x.to(self.device)
 
-        x = self.encode(inp)
+        x = self.encode(x)
         x = self.ensemble(x)
         x = self.decode(x)
         return x

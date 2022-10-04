@@ -7,19 +7,18 @@ from os import path as osp
 
 import cv2
 import numpy as np
-sys.path.append('.')
-from basicsr.utils import scandir
+import torch
 from tqdm import tqdm
 
 # Random seed
-import torch
+sys.path.append('.')
+from basicsr.utils import scandir
+
 random_seed = 10
 torch.manual_seed(random_seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-import numpy as np
 np.random.seed(random_seed)
-import random
 random.seed(random_seed)
 torch.cuda.manual_seed(random_seed)
 # torch.cuda.manual_seed_all(random_seed) # if use multi-GPU

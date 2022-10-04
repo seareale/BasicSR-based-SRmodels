@@ -16,7 +16,7 @@ datasets:
   train:
     name: custom
     type: PairedImageDataset
-    dataroot_gt: datasets/Dacon/train/lr_bicubic
+    dataroot_gt: datasets/Dacon/train/lr_random
     dataroot_lq: datasets/Dacon/train/lr
     io_backend:
       type: disk
@@ -56,22 +56,22 @@ train:
 
   scheduler:
     type: TrueCosineAnnealingLR
-    T_max: 13666 # 27332 # 54664 # Final_Dacon
+    T_max: 16400 # 27332 # 54664 # Final_Dacon
     eta_min: !!float 1e-7
 
-  total_iter: 13666 # 27332 # 54664 # Final_Dacon (1 epoch : 1312)
+  total_iter: 16400 # 27332 # 54664 # Final_Dacon (1 epoch : 1312)
   warmup_iter: -1 # no warm up
 
   # losses
   pixel_opt:
-    type: PSNRLoss
+    type: L1Loss
     loss_weight: 1
     reduction: mean
 
 # logging settings
 logger:
   print_freq: 500
-  save_checkpoint_freq: !!float 1.312e2 # Final_Dacon (1 epoch : 1312)
+  save_checkpoint_freq: !!float 4.1e2 # Final_Dacon (1 epoch : 1312)
   use_tb_logger: true
   wandb:
     project: ~

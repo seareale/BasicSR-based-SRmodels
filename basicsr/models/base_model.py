@@ -1,13 +1,13 @@
 import os
 import time
-import torch
 from collections import OrderedDict
 from copy import deepcopy
-from torch.nn.parallel import DataParallel, DistributedDataParallel
 
+import torch
 from basicsr.models import lr_scheduler as lr_scheduler
 from basicsr.utils import get_root_logger
 from basicsr.utils.dist_util import master_only
+from torch.nn.parallel import DataParallel, DistributedDataParallel
 
 
 class BaseModel():
@@ -129,6 +129,11 @@ class BaseModel():
         elif scheduler_type == 'CosineAnnealingRestartLR':
             for optimizer in self.optimizers:
                 self.schedulers.append(lr_scheduler.CosineAnnealingRestartLR(optimizer, **train_opt['scheduler']))
+        elif scheduler_type == 'TrueCosineAnnealingLR':
+            print('..', 'cosineannealingLR')
+            for optimizer in self.optimizers:
+                self.schedulers.append(
+                    torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, **train_opt['scheduler']))
         else:
             raise NotImplementedError(f'Scheduler {scheduler_type} is not implemented yet.')
 
