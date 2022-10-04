@@ -1,0 +1,83 @@
+# ------------------------------------------------------------------------
+# Copyright (c) 2022 megvii-model. All Rights Reserved.
+# ------------------------------------------------------------------------
+# Modified from BasicSR (https://github.com/xinntao/BasicSR)
+# Copyright 2018-2020 BasicSR Authors
+# ------------------------------------------------------------------------
+# general settings
+name: NAFNet_256_width64_mse
+model_type: ImageRestorationModel
+scale: 1
+num_gpu: auto # set num_gpu: 0 for cpu mode
+manual_seed: 10
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: custom
+    type: PairedImageDataset
+    dataroot_gt: ../datasets/Dacon/train/lr_bicubic
+    dataroot_lq: ../datasets/Dacon/train/lr
+    io_backend:
+      type: disk
+
+    gt_size: 256
+      use_flip: true
+      use_rot: false
+
+    # data loader
+    use_shuffle: true
+    num_worker_per_gpu: 16
+    batch_size_per_gpu: 10
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+# network structures
+network_g:
+  type: NAFNetLocal
+  width: 64
+  enc_blk_nums: [1, 1, 1, 28]
+  middle_blk_num: 1
+  dec_blk_nums: [1, 1, 1, 1]
+
+# path
+path:
+  pretrain_network_g: ./experiments/pretrained_models/NAFNet-REDS-width64.pth
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-3
+    weight_decay: !!float 1e-3
+    betas: [0.9, 0.9]
+
+  scheduler:
+    type: TrueCosineAnnealingLR
+    T_max: 54664 # 27332 # 13666 # Final_Dacon
+    eta_min: !!float 1e-7
+
+  total_iter: 54664 # 27332 #  13666 # Final_Dacon (1 epoch : 1312)
+  warmup_iter: -1 # no warm up
+
+  # losses
+  pixel_opt:
+    type: MSELoss
+    loss_weight: 1
+    reduction: mean
+
+# logging settings
+logger:
+  print_freq: 680
+  save_checkpoint_freq: !!float 6.8e2 # Final_Dacon (1 epoch : 1312)
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
