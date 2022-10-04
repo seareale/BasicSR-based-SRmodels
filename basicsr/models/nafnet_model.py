@@ -17,7 +17,7 @@ from basicsr.models.base_model import BaseModel
 from basicsr.utils import get_root_logger, imwrite, tensor2img
 from basicsr.utils.dist_util import get_dist_info
 
-loss_module = importlib.import_module('basicsr.models.losses')
+loss_module = importlib.import_module('basicsr.losses')
 metric_module = importlib.import_module('basicsr.metrics')
 
 class ImageRestorationModel(BaseModel):
