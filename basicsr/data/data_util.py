@@ -221,7 +221,7 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     input_paths = list(scandir(input_folder))
     gt_paths = list(scandir(gt_folder))
     assert len(input_paths) == len(gt_paths), (f'{input_key} and {gt_key} datasets have different number of images: '
-                                               f'{len(input_paths)}, {len(gt_paths)}.')
+                                               f'{len(input_paths)}-{input_folder}, {len(gt_paths)}.')
     paths = []
     for gt_path in gt_paths:
         basename, ext = osp.splitext(osp.basename(gt_path))

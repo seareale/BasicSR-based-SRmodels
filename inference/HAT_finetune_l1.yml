@@ -1,0 +1,103 @@
+# general settings
+name: 2stage_HAT_finetune_l1
+model_type: HATModel
+scale: 4
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  test_1: # ensemble mean
+    name: ensemble
+    type: PairedImageDataset
+    dataroot_gt: datasets/Dacon/test/hr
+    dataroot_lq: results/ensemble
+    io_backend:
+      type: disk
+
+  # test_2: # ensemble learning
+  #   name: test_Deblur_ensemble
+  #   type: PairedImageDataset
+  #   dataroot_gt: datasets/Dacon/test/hr
+  #   dataroot_lq: results/test_Deblur_ensemble/visualization/custom
+  #   io_backend:
+  #     type: disk
+
+  test_3: # charbonnier
+    name: 1stage_NAFNet_256_charbonnier
+    type: PairedImageDataset
+    dataroot_gt: datasets/Dacon/test/hr
+    dataroot_lq: results/1stage_NAFNet_256_charbonnier/visualization/custom
+    io_backend:
+      type: disk
+
+  test_4: # l1
+    name: 1stage_NAFNet_256_l1
+    type: PairedImageDataset
+    dataroot_gt: datasets/Dacon/test/hr
+    dataroot_lq: results/1stage_NAFNet_256_l1/visualization/custom
+    io_backend:
+      type: disk
+
+  test_5: # mse
+    name: 1stage_NAFNet_256_mse
+    type: PairedImageDataset
+    dataroot_gt: datasets/Dacon/test/hr
+    dataroot_lq: results/1stage_NAFNet_256_mse/visualization/custom
+    io_backend:
+      type: disk
+
+  test_6: # psnr
+    name: 1stage_NAFNet_256_psnr
+    type: PairedImageDataset
+    dataroot_gt: datasets/Dacon/test/hr
+    dataroot_lq: results/1stage_NAFNet_256_psnr/visualization/custom
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: HAT
+  upscale: 4
+  in_chans: 3
+  img_size: 64
+  window_size: 16
+  compress_ratio: 3
+  squeeze_factor: 30
+  conv_scale: 0.01
+  overlap_ratio: 0.5
+  img_range: 1.
+  depths: [6, 6, 6, 6, 6, 6]
+  embed_dim: 180
+  num_heads: [6, 6, 6, 6, 6, 6]
+  mlp_ratio: 2
+  upsampler: 'pixelshuffle'
+  resi_connection: '1conv'
+
+# path
+path:
+  pretrain_network_g: weights/HAT_finetune_l1_20epoch.pth
+  param_key_g: 'params_ema'
+  strict_load_g: true
+  resume_state: ~
+
+# validation settings
+val:
+  save_img: true
+  grids: false
+  suffix: ~
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

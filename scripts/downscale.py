@@ -30,8 +30,8 @@ def main():
     opt['compression_level'] = 3
 
     # HR images
-    opt['input_folder'] = 'datasets/Dacon/train/hr'
-    opt['save_folder'] = 'datasets/Dacon/train/lr_random'
+    opt['input_folder'] = 'datasets/Dacon/test/hr'
+    opt['save_folder'] = 'datasets/Dacon/test/lr_random'
     opt['resize'] = 0.25
     opt['offset'] = None
     extract_lrimages(opt)
